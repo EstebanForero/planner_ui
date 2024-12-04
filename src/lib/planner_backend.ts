@@ -112,6 +112,6 @@ export async function delete_block(block_id: number) {
   return ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
 }
 
-export async function get_planning(user_id: number): Promise<WeeklySchedule> {
+export async function get_planning(user_id: number): Promise<WeeklySchedule[]> {
   return ky.get(`https://planner-production-4a40.up.railway.app/planner/planning/${user_id}`).json()
 }

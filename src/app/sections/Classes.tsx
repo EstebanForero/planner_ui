@@ -81,7 +81,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       delete_block(block_id)
     },
     onMutate: async () => {
-      queryClient.invalidateQueries({ queryKey: ['classes']})
+      queryClient.invalidateQueries({ queryKey: ['classes', 'planning']})
     }
   })
 
@@ -176,7 +176,7 @@ const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
       return await add_block(blockCreation, schedule_id);
     },
     onMutate: async () => {
-      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`, 'planning']})
     }
   });
 
