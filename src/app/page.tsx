@@ -18,7 +18,7 @@ export default function Home() {
     <QueryClientProvider client={queryClient}>
       <div className="w-full h-full">
         <NavBar/>
-        <input type='number' onChange={(e) => setUserIdTextField(e.target.value)} className='rounded-lg px-4 py-1 m-4' placeholder='user id' value={userIdTextField}/>
+        <input type='number' onChange={(e) => setUserIdTextField(e.target.value)} className='rounded-lg px-4 py-2 m-4 bg-black text-white border border-purple-600' placeholder='user id' value={userIdTextField}/>
         <button className='text-white rounded-lg bg-black border border-purple-500 p-2'
           onClick={async () => {
             const user_id = await add_user()

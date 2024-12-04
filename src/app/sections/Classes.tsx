@@ -72,7 +72,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       delete_schedule(schedule_id)
     },
     onMutate: async () => {
-      queryClient.invalidateQueries({ queryKey: ['classes']})
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
     }
   })
 
@@ -81,7 +81,8 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       delete_block(block_id)
     },
     onMutate: async () => {
-      queryClient.invalidateQueries({ queryKey: ['classes', 'planning']})
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
+      queryClient.invalidateQueries({ queryKey: ['planning']})
     }
   })
 
@@ -105,19 +106,20 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       <Accordion variant='splitted'>
         {data.schedules.map(schedule_info => <AccordionItem key={schedule_info.schedule_id} title={schedule_info.schedule_name}
           className='border border-purple-600 rounded-lg mt-4 text-white py-3'
-          startContent={<button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8'
-          onClick={() => deleteScheduleMutation.mutate(schedule_info.schedule_id)}
-        >Delete
-        </button>}
         >
+          <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8 mt-4'
+            onClick={() => deleteScheduleMutation.mutate(schedule_info.schedule_id)}
+          >Delete
+          </button>
           <BlockAdder schedule_id={schedule_info.schedule_id} class_id={class_id}/>
           <Accordion variant='splitted'>
             {schedule_info.blocks.map(block_info => <AccordionItem key={block_info.block_id} title={block_info.day}
-              startContent={<button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8'
+              className='border border-purple-600 rounded-lg text-white py-3'
+            >
+              <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8 mt-4'
                 onClick={() => deleteBlockMutation.mutate(block_info.block_id)}
               >Delete
-              </button>}
-            >
+              </button>
               <BlockVizualizer block={block_info}/>
             </AccordionItem>)}
           </Accordion>
@@ -155,7 +157,7 @@ interface BlockAddedProps {
   class_id: number
 }
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
   const [startHour, setStartHour] = useState(7);
@@ -176,7 +178,8 @@ const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
       return await add_block(blockCreation, schedule_id);
     },
     onMutate: async () => {
-      queryClient.invalidateQueries({ queryKey: [`class${class_id}`, 'planning']})
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
+      queryClient.invalidateQueries({ queryKey: [`planning`]})
     }
   });
 
