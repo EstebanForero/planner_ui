@@ -7,10 +7,11 @@ import { Spinner } from '@nextui-org/spinner';
 import {Accordion, AccordionItem} from "@nextui-org/accordion";
 
 
-const Classes = () => {
+type Props = {
+  userId: string
+}
 
-  const [userId, setUserId] = useState('')
-  const [userIdTextField, setUserIdTextField] = useState('')
+const Classes = ({ userId }: Props) => {
 
   const { data, isError, isLoading } = useQuery({
     queryKey: ['classes', userId],
@@ -21,19 +22,6 @@ const Classes = () => {
 
   return (
     <section className='mt-2'>
-      <input type='number' onChange={(e) => setUserIdTextField(e.target.value)} className='rounded-lg px-4 py-1 m-4' placeholder='user id' value={userIdTextField}/>
-      <button className='text-white rounded-lg bg-black border border-purple-500 p-2'
-        onClick={async () => {
-          const user_id = await add_user()
-          setUserId(String(user_id))
-          setUserIdTextField(String(user_id))
-        }}
-      >Register</button>
-      <button className='text-white rounded-lg bg-black border border-purple-500 p-2 ml-4'
-        onClick={async () => {
-          setUserId(userIdTextField)
-        }}
-      >Log In</button>
       <ClassAdder user_id={Number(userId)}/>
       <Element name='classes'>
         {isError ?
