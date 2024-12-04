@@ -1,5 +1,5 @@
 "use client";
-import { add_class, add_user, ClassU, get_class, get_classes } from '@/lib/planner_backend';
+import { add_class, add_schedule, add_user, ClassU, get_class, get_classes } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
@@ -55,7 +55,13 @@ const Class = ({ class_id, user_id }: ClassProps) => {
     queryKey: [`class${class_id}`]
   })
 
-  if (isLoading) {
+  const deleteClassMutation = useMutation({
+    mutationFn: async () => {
+      delete_
+    }
+  })
+
+  if (isLoading || !data) {
     return <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] p-4'>
       <Spinner/>
     </div>
@@ -64,14 +70,51 @@ const Class = ({ class_id, user_id }: ClassProps) => {
 
   return (
     <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] p-4'>
-      <h1 className='text-white'>{data?.class_name}</h1>
+      <div className='flex flex-row justify-between items-center mb-3 mx-2'>
+        <h1 className='text-white font-bold text-lg'>{data.class_name}</h1>
+        <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg'
+          onClick={}
+        >Delete
+        </button>
+      </div>
+      <ScheduleAdder class_id={class_id}/>
       <Accordion variant='splitted'>
-        {data?.schedules.map(schedule => <AccordionItem>
-          {schedule.schedule_name}
+        {data.schedules.map(schedule_info => <AccordionItem key={schedule_info.schedule_id} title={schedule_info.schedule_name}
+          className='border border-purple-600 rounded-lg mt-4 text-white py-3'
+        >
+
         </AccordionItem>)}
       </Accordion>
     </div>
   )
+}
+
+type ScheduleAdderProps = {
+  class_id: number
+}
+
+const ScheduleAdder = ({ class_id }: ScheduleAdderProps) => {
+
+  const [scheduleName, setScheduleName] = useState('')
+
+  const queryClient = useQueryClient()
+
+  const addScheduleMutation = useMutation({
+    mutationFn: async () => {
+      await add_schedule(class_id, scheduleName)
+    },
+    onMutate: () => {
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
+    }
+  })
+
+  return <div className='flex flex-row mx-2'>
+    <input className='text-white bg-gray-800 p-2 mr-4 rounded-lg grow' onChange={(e) => setScheduleName(e.target.value)}/>
+    <button className='text-white rounded-lg bg-black border border-purple-500 p-2'
+      onClick={() => addScheduleMutation.mutate()}
+    >Add schedule</button>
+  </div>
+
 }
 
 type ClassAdderProps = {
