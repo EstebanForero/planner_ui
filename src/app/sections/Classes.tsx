@@ -1,6 +1,6 @@
 "use client";
-import { add_user, ClassU, get_classes } from '@/lib/planner_backend';
-import { useQuery } from '@tanstack/react-query';
+import { add_class, add_user, ClassU, get_classes } from '@/lib/planner_backend';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
 import {Input} from "@nextui-org/input";
@@ -31,7 +31,7 @@ const Classes = () => {
           setUserId(userIdTextField)
         }}
       >Log In</button>
-      <ClassAdder/>
+      <ClassAdder user_id={Number(userId)}/>
       <Element name='classes'>
         {isError ?
           <p className='text-red-500'>Invalid user id</p>
@@ -58,15 +58,32 @@ const Class = ({ class_id }: ClassProps) => {
   )
 }
 
+type ClassAdderProps = {
+  user_id: number
+}
 
-const ClassAdder = () => {
+const ClassAdder = (props: ClassAdderProps) => {
 
+  const [className, setClassName] = useState('')
+
+  const queryClient = useQueryClient()
+
+  const addClassMutation = useMutation({
+    mutationFn: async () => {
+      console.log('executing add class mutation')
+      await add_class(props.user_id, className)
+    },
+    onMutate: () => {
+      queryClient.invalidateQueries({ queryKey: ['classes']})
+    }
+  })
 
   return (
     <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] flex flex-col'>
-      <input placeholder='Class name' className='m-3 rounded-lg bg-gray-800 px-3 py-1'/>
-      <button className='text-white rounded-lg bg-black border border-purple-500 p-2' onChange={() => {
-
+      <input placeholder='Class name' className='m-3 rounded-lg bg-gray-800 px-3 py-1 text-white' onChange={(e) => setClassName(e.target.value)}/>
+      <button className='text-white rounded-lg bg-black border border-purple-500 p-2' onClick={() => {
+        console.log('class name added')
+        addClassMutation.mutate()
       }}>Add class</button>
     </div>
   )
