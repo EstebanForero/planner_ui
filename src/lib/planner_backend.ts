@@ -27,12 +27,28 @@ export type ClassU = {
   schedules: Schedule[]
 }
 
+type ScheduleEntry = {
+  class_name: string;
+  schedule_name: string;
+};
+
+type DaySchedule = Record<number, ScheduleEntry>;
+
+type WeeklySchedule = {
+  monday: DaySchedule;
+  tuesday: DaySchedule;
+  wednesday: DaySchedule;
+  thursday: DaySchedule;
+  friday: DaySchedule;
+  Saturday: DaySchedule;
+};
+
 export async function add_user(): Promise<number> {
   return ky.post('https://planner-production-4a40.up.railway.app/planner/addUser').json();
 }
 
 export async function add_class(user_id: number, class_name: string) {
-  return ky.post('http://planner-production-4a40.up.railway.app/planner/addClass',{
+  return ky.post('https://planner-production-4a40.up.railway.app/planner/addClass',{
     json: {
       user_id: user_id,
       class_name: class_name
@@ -41,7 +57,7 @@ export async function add_class(user_id: number, class_name: string) {
 }
 
 export async function get_class(user_id: number, class_id: number): Promise<ClassU> {
-  return ky.post('http://planner-production-4a40.up.railway.app/planner/getClass', {
+  return ky.post('https://planner-production-4a40.up.railway.app/planner/getClass', {
     json: {
       user_id: user_id,
       class_id: class_id
@@ -50,11 +66,11 @@ export async function get_class(user_id: number, class_id: number): Promise<Clas
 }
 
 export async function get_classes(user_id: number): Promise<ClassU[]> {
-  return ky.get(`http://planner-production-4a40.up.railway.app/planner/getClasses/${user_id}`).json()
+  return ky.get(`https://planner-production-4a40.up.railway.app/planner/getClasses/${user_id}`).json()
 }
 
 export async function add_schedule(class_id: number, schedule_name: string) {
-  return ky.post('http://planner-production-4a40.up.railway.app/planner/addSchedule',{
+  return ky.post('https://planner-production-4a40.up.railway.app/planner/addSchedule',{
     json: {
       class_id: class_id,
       schedule_name: schedule_name
@@ -63,11 +79,11 @@ export async function add_schedule(class_id: number, schedule_name: string) {
 }
 
 export async function delete_schedule(schedule_id: number) {
-  return ky.post(`http://planner-production-4a40.up.railway.app/planner/deleteSchedule/${schedule_id}`)
+  return ky.post(`https://planner-production-4a40.up.railway.app/planner/deleteSchedule/${schedule_id}`)
 }
 
 export async function add_block(block_creation: BlockCreation, schedule_id: number) {
-  return ky.post('http://planner-production-4a40.up.railway.app/planner/addBlock', {
+  return ky.post('https://planner-production-4a40.up.railway.app/planner/addBlock', {
     json: {
       block: block_creation,
       schedule_id: schedule_id
@@ -76,13 +92,14 @@ export async function add_block(block_creation: BlockCreation, schedule_id: numb
 }
 
 export async function get_blocks(schedule_id: number): Promise<Block[]> {
-  return ky.get(`http://planner-production-4a40.up.railway.app/planner/getBlocks/${schedule_id}`)
+  return ky.get(`https://planner-production-4a40.up.railway.app/planner/getBlocks/${schedule_id}`)
     .json()
 }
 
 export async function delete_block(block_id: number) {
-  return ky.post(`http://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
+  return ky.post(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
 }
 
-
-
+export async function get_planning(user_id: number): Promise<WeeklySchedule> {
+  return ky.get(`https://planner-production-4a40.up.railway.app/planner/planning/${user_id}`).json()
+}
