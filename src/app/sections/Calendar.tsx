@@ -1,113 +1,39 @@
 "use client";
-import React from 'react'
-import { Element } from 'react-scroll'
+import React from 'react';
+import { Element } from 'react-scroll';
 
 const Calendar = () => {
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const timeSlots = [
+    '7am', '8am', '9am', '10am', '11am', '12pm', 
+    '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm'
+  ];
+
   return (
-    <section className='mb-3 w-full h-full'>
-      <Element name='calendar' className='w-full h-full'>
+    <section className="mb-3 w-full h-full">
+      <Element name="calendar" className="w-full h-full">
+        <div className="grid grid-cols-7 grid-rows-14 w-full h-full">
+          {daysOfWeek.map((day, index) => (
+            <p
+              key={day}
+              className={`col-start-${index + 2} col-span-1 text-white flex w-12
+h-12 justify-center items-center pl-3 text-xl font-bold`}>
+              {day}
+            </p>
+          ))}
 
-        <div className='grid grid-cols-7 grid-rows-14 w-full h-full'>
-
-          <p className='col-start-2 col-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            M
-          </p>
-
-          <p className='col-start-3 col-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            T
-          </p>
-
-          <p className='col-start-4 col-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            W
-          </p>
-
-          <p className='col-start-5 col-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            Th
-          </p>
-
-          <p className='col-start-6 col-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            F
-          </p>
-
-          <p className='col-start-7 col-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            S
-          </p>
-
-          <p className='row-start-2 row-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            7am
-          </p>
-
-          <p className='row-start-3 row-span-1 text-white flex w-12 h-12 justify-center
-            items-center pl-3 text-xl font-bold'>
-            8am
-          </p>
-
-          <p className='row-start-4 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            9am
-          </p>
-
-          <p className='row-start-5 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            10am
-          </p>
-
-          <p className='row-start-6 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            11am
-          </p>
-
-          <p className='row-start-7 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            12pm
-          </p>
-
-          <p className='row-start-8 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            1pm
-          </p>
-
-          <p className='row-start-9 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            2pm
-          </p>
-
-          <p className='row-start-10 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            3pm
-          </p>
-
-          <p className='row-start-11 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            4pm
-          </p>
-
-          <p className='row-start-12 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            5pm
-          </p>
-
-          <p className='row-start-13 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            6pm
-          </p>
-
-          <p className='row-start-14 row-span-1 text-white flex w-12 h-12 justify-center 
-            items-center pl-3 text-xl font-bold'>
-            7pm
-          </p>
+          {timeSlots.map((time, index) => (
+            <p
+              key={time}
+              className={`row-start-${index + 2} row-span-1 text-white flex w-12
+h-12 justify-center items-center pl-3 text-xl font-bold`}>
+              {time}
+            </p>
+          ))}
         </div>
-
       </Element>
     </section>
-  )
-}
+  );
+};
 
-export default Calendar
+export default Calendar;
