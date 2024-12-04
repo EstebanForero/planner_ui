@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Element } from 'react-scroll';
 import { useQuery } from '@tanstack/react-query';
-import { get_planning as obtain_planning, WeeklySchedule } from '@/lib/planner_backend';
+import { get_planning as obtain_planning, RankedWeek, RankingParameters, WeeklySchedule } from '@/lib/planner_backend';
 import { Spinner } from '@nextui-org/spinner';
 
-const get_planning = async (user_id: number): Promise<WeeklySchedule[]> => {
-  return await obtain_planning(user_id);
+const get_planning = async (rankingParameters: RankingParameters, user_id: number): Promise<RankedWeek[]> => {
+
+  return await obtain_planning(rankingParameters, user_id);
 };
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
 
 const Calendar = ({ userId }: Props) => {
   const [count, setCount] = useState(0);
+  const [dayCost, setDayCost] = useState("");
+  const [hourCost, setHourCost] = useState("");
 
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const timeSlots = [
@@ -23,8 +26,11 @@ const Calendar = ({ userId }: Props) => {
   ];
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ['planning', userId],
-    queryFn: async () => await get_planning(userId),
+    queryKey: ['planning', userId, dayCost, hourCost],
+    queryFn: async () => await get_planning({
+      cost_day: Number(dayCost ?? '0'),
+      cost_hour: Number(hourCost ?? '0')
+    }, userId),
   });
 
   if (isError) throw new Error("Error calling get planning from backend");
@@ -42,7 +48,7 @@ const Calendar = ({ userId }: Props) => {
     'Wed': 'wednesday',
     'Thu': 'thursday',
     'Fri': 'friday',
-    'Sat': 'Saturday',
+    'Sat': 'saturday',
   }
 
   const handler = () => {
@@ -58,6 +64,10 @@ const Calendar = ({ userId }: Props) => {
       return
     }
     setCount(count - 1);
+  }
+
+  if (!data[count]) {
+    return null
   }
 
   return (
@@ -82,7 +92,8 @@ const Calendar = ({ userId }: Props) => {
 
           {daysOfWeek.map((day, dayIndex) => {
             const actualDayKey = dayMap[day];
-            const daySchedule = data[count]?.[actualDayKey];
+
+            const daySchedule = data[count].week?.[actualDayKey];
 
             if (!daySchedule) return null
 
@@ -112,18 +123,13 @@ col-span-1 row-span-1 bg-red-500 text-white flex justify-center items-center`}>
 
         <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
           placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
-          placeholder:rounded rounded'
-          placeholder='hour cost'/>
+          placeholder:rounded rounded' placeholder='hour cost' type='number' onChange={(e) => setHourCost(e.target.value)}/>
 
         <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
           placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
-          placeholder:rounded rounded'
-          placeholder='day cost'/>
+          placeholder:rounded rounded' placeholder='day cost' type='number' onChange={(e) => setDayCost(e.target.value)}/>
 
-        <button className='bg-transparent border rounded border-purple-800 text-white w-30 h-10 ml-3 p-2'
-          onClick={prevHandler}>
-          Ranked plannings
-        </button>
+        <p className='font-bold text-white text-lg inline ml-4'>puntuation: {data[count].puntuation}</p>
       </Element>
     </section>
   );

@@ -40,8 +40,18 @@ export type WeeklySchedule = {
   wednesday: DaySchedule;
   thursday: DaySchedule;
   friday: DaySchedule;
-  Saturday: DaySchedule;
+  saturday: DaySchedule;
 };
+
+export type RankedWeek = {
+  week: WeeklySchedule,
+  puntuation: number,
+}
+
+export interface RankingParameters {
+  cost_hour: number,
+  cost_day: number,
+}
 
 export async function add_user(): Promise<number> {
   return ky.post('https://planner-production-4a40.up.railway.app/planner/addUser').json();
@@ -112,6 +122,13 @@ export async function delete_block(block_id: number) {
   ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
 }
 
-export async function get_planning(user_id: number): Promise<WeeklySchedule[]> {
-  return ky.get(`https://planner-production-4a40.up.railway.app/planner/planning/${user_id}`).json()
+export async function get_planning(rankingParameters: RankingParameters, user_id: number): Promise<RankedWeek[]> {
+  console.log("parameters: ");
+  console.log(rankingParameters);
+  return ky.post(`https://planner-production-4a40.up.railway.app/planner/planningRanked`, {
+    json: {
+      ranked_parameters: rankingParameters,
+      user_id: user_id,
+    }
+  }).json()
 }
