@@ -1,6 +1,12 @@
 "use client";
 import React from 'react';
 import { Element } from 'react-scroll';
+import { get_planning as obtain_planning, WeeklySchedule } from '@/lib/planner_backend'
+
+const get_planning = async (user_id: number): Promise<WeeklySchedule> => {
+  const result = await obtain_planning(user_id);
+  return result
+}
 
 const Calendar = () => {
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
