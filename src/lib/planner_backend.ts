@@ -28,7 +28,7 @@ export type ClassU = {
 }
 
 export async function add_user(): Promise<number> {
-  return ky.post('http://planner-production-4a40.up.railway.app/planner/addUser').json();
+  return ky.post('https://planner-production-4a40.up.railway.app/planner/addUser').json();
 }
 
 export async function add_class(user_id: number, class_name: string) {
@@ -50,7 +50,7 @@ export async function get_class(user_id: number, class_id: number): Promise<Clas
 }
 
 export async function get_classes(user_id: number): Promise<ClassU[]> {
-  return ky.post(`http://planner-production-4a40.up.railway.app/planner/getClasses/${user_id}`).json()
+  return ky.get(`http://planner-production-4a40.up.railway.app/planner/getClasses/${user_id}`).json()
 }
 
 export async function add_schedule(class_id: number, schedule_name: string) {
@@ -82,7 +82,6 @@ export async function get_blocks(schedule_id: number): Promise<Block[]> {
 
 export async function delete_block(block_id: number) {
   return ky.post(`http://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
-
 }
 
 
