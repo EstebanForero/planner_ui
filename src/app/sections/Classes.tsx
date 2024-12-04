@@ -1,10 +1,11 @@
 "use client";
-import { add_class, add_schedule, add_user, ClassU, delete_class, get_class, get_classes } from '@/lib/planner_backend';
+import { add_block, add_class, add_schedule, add_user, Block, BlockCreation, ClassU, Day, delete_block, delete_class, delete_schedule, get_class, get_classes } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
 import { Spinner } from '@nextui-org/spinner';
 import {Accordion, AccordionItem} from "@nextui-org/accordion";
+import { Select, SelectItem } from '@nextui-org/select';
 
 
 type Props = {
@@ -61,7 +62,25 @@ const Class = ({ class_id, user_id }: ClassProps) => {
     mutationFn: async () => {
       delete_class(user_id, class_id)
     },
-    onMutate: () => {
+    onMutate: async () => {
+      queryClient.invalidateQueries({ queryKey: ['classes']})
+    }
+  })
+
+  const deleteScheduleMutation = useMutation({
+    mutationFn: async (schedule_id: number) => {
+      delete_schedule(schedule_id)
+    },
+    onMutate: async () => {
+      queryClient.invalidateQueries({ queryKey: ['classes']})
+    }
+  })
+
+  const deleteBlockMutation = useMutation({
+    mutationFn: async (block_id: number) => {
+      delete_block(block_id)
+    },
+    onMutate: async () => {
       queryClient.invalidateQueries({ queryKey: ['classes']})
     }
   })
@@ -86,13 +105,137 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       <Accordion variant='splitted'>
         {data.schedules.map(schedule_info => <AccordionItem key={schedule_info.schedule_id} title={schedule_info.schedule_name}
           className='border border-purple-600 rounded-lg mt-4 text-white py-3'
+          startContent={<button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8'
+          onClick={() => deleteScheduleMutation.mutate(schedule_info.schedule_id)}
+        >Delete
+        </button>}
         >
-
+          <BlockAdder schedule_id={schedule_info.schedule_id} class_id={class_id}/>
+          <Accordion variant='splitted'>
+            {schedule_info.blocks.map(block_info => <AccordionItem key={block_info.block_id} title={block_info.day}
+              startContent={<button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8'
+                onClick={() => deleteBlockMutation.mutate(block_info.block_id)}
+              >Delete
+              </button>}
+            >
+              <BlockVizualizer block={block_info}/>
+            </AccordionItem>)}
+          </Accordion>
         </AccordionItem>)}
       </Accordion>
     </div>
   )
 }
+
+interface BlockProps {
+  block: Block;
+}
+
+const BlockVizualizer = ({ block }: BlockProps) => {
+  const formatHour = (hour: number) => {
+    return hour.toString().padStart(2, '0');
+  };
+
+  return (
+    <div className="bg-gray-800 border rounded-lg p-4 shadow-sm flex items-center space-x-4">
+      <div className="flex items-center space-x-2">
+        <span className="text-white">
+          {formatHour(block.start_hour)}:00 - {formatHour(block.finish_hour)}:00
+        </span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className="text-white">{block.day}</span>
+      </div>
+    </div>
+  );
+};
+
+interface BlockAddedProps {
+  schedule_id: number
+  class_id: number
+}
+
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
+  const [startHour, setStartHour] = useState(7);
+  const [finishHour, setFinishHour] = useState(9);
+  const [selectedDay, setSelectedDay] = useState<Day>('Monday');
+
+  const queryClient = useQueryClient();
+
+  const addBlockMutation = useMutation({
+    mutationFn: async () => {
+      const blockCreation: BlockCreation = {
+        start_hour: startHour,
+        finish_hour: finishHour,
+        day: selectedDay
+      };
+
+      resetForm()
+      return await add_block(blockCreation, schedule_id);
+    },
+    onMutate: async () => {
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
+    }
+  });
+
+  const resetForm = () => {
+    setStartHour(7);
+    setFinishHour(9);
+    setSelectedDay('Monday');
+  };
+
+  return (
+    <div className="flex flex-col space-y-4 mb-6">
+      <div className="flex space-x-2">
+        <input 
+          type="number" 
+          value={startHour} 
+          onChange={(e) => setStartHour(Number(e.target.value))}
+          min={0} 
+          max={23} 
+          className="w-20 p-2 border rounded bg-black text-white border-purple-600"
+          placeholder="Start Hour"
+        />
+
+        <input 
+          type="number" 
+          value={finishHour} 
+          onChange={(e) => setFinishHour(Number(e.target.value))}
+          min={0} 
+          max={23} 
+          className="w-20 p-2 border rounded bg-black text-white border-purple-600"
+          placeholder="Finish Hour"
+        />
+
+        <select 
+          value={selectedDay} 
+          onChange={(e) => setSelectedDay(e.target.value as Day)}
+          className="p-2 border rounded bg-black text-white border-purple-600"
+        >
+          {days.map((day) => (
+            <option key={day} value={day}>{day}</option>
+          ))}
+        </select>
+      </div>
+
+      <button 
+        onClick={() => addBlockMutation.mutate()}
+        disabled={addBlockMutation.isPending}
+        className="text-white rounded-lg bg-black border border-purple-500 p-2"
+      >
+        {addBlockMutation.isPending ? 'Adding...' : 'Add Block'}
+      </button>
+
+      {addBlockMutation.isError && (
+        <div className="text-red-500">
+          Error adding block: {addBlockMutation.error.message}
+        </div>
+      )}
+    </div>
+  );
+};
 
 type ScheduleAdderProps = {
   class_id: number
@@ -108,7 +251,7 @@ const ScheduleAdder = ({ class_id }: ScheduleAdderProps) => {
     mutationFn: async () => {
       await add_schedule(class_id, scheduleName)
     },
-    onMutate: () => {
+    onMutate: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
     }
   })
@@ -137,7 +280,7 @@ const ClassAdder = (props: ClassAdderProps) => {
       console.log('executing add class mutation')
       await add_class(props.user_id, className)
     },
-    onMutate: () => {
+    onMutate: async () => {
       queryClient.invalidateQueries({ queryKey: ['classes']})
     }
   })

@@ -93,6 +93,8 @@ export async function delete_schedule(schedule_id: number) {
 }
 
 export async function add_block(block_creation: BlockCreation, schedule_id: number) {
+  console.log(`adding block with schedule id: ${schedule_id}`)
+  console.log(block_creation)
   return ky.post('https://planner-production-4a40.up.railway.app/planner/addBlock', {
     json: {
       block: block_creation,
@@ -107,7 +109,7 @@ export async function get_blocks(schedule_id: number): Promise<Block[]> {
 }
 
 export async function delete_block(block_id: number) {
-  return ky.post(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
+  return ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
 }
 
 export async function get_planning(user_id: number): Promise<WeeklySchedule> {
