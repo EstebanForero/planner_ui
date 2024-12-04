@@ -5,7 +5,7 @@ import Classes from "./sections/Classes";
 import NavBar from "./sections/NavBar";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { add_user } from "@/lib/planner_backend";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient()
 
@@ -13,6 +13,17 @@ export default function Home() {
 
   const [userId, setUserId] = useState('')
   const [userIdTextField, setUserIdTextField] = useState('')
+
+  useEffect(() => {
+    const user_id = localStorage.getItem('user_id')
+    if (user_id) {
+      setUserId(userId)
+    }
+  })
+
+  useEffect(() => {
+    localStorage.setItem('user_id', userId)
+  }, [userId])
 
   return (
     <QueryClientProvider client={queryClient}>

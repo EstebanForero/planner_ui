@@ -1,11 +1,10 @@
 "use client";
-import { add_block, add_class, add_schedule, add_user, Block, BlockCreation, ClassU, Day, delete_block, delete_class, delete_schedule, get_class, get_classes } from '@/lib/planner_backend';
+import { add_block, add_class, add_schedule, Block, BlockCreation, Day, delete_block, delete_class, delete_schedule, get_class, get_classes } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
 import { Spinner } from '@nextui-org/spinner';
 import {Accordion, AccordionItem} from "@nextui-org/accordion";
-import { Select, SelectItem } from '@nextui-org/select';
 
 
 type Props = {
@@ -14,7 +13,7 @@ type Props = {
 
 const Classes = ({ userId }: Props) => {
 
-  const { data, isError, isLoading } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['classes', userId],
     queryFn: async () => await get_classes(Number(userId))
   })
@@ -60,7 +59,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
 
   const deleteClassMutation = useMutation({
     mutationFn: async () => {
-      delete_class(user_id, class_id)
+      await delete_class(user_id, class_id)
     },
     onMutate: async () => {
       queryClient.invalidateQueries({ queryKey: ['classes']})
@@ -69,7 +68,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
 
   const deleteScheduleMutation = useMutation({
     mutationFn: async (schedule_id: number) => {
-      delete_schedule(schedule_id)
+      await delete_schedule(schedule_id)
     },
     onMutate: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
@@ -78,7 +77,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
 
   const deleteBlockMutation = useMutation({
     mutationFn: async (block_id: number) => {
-      delete_block(block_id)
+      await delete_block(block_id)
     },
     onMutate: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
