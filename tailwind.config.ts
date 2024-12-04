@@ -21,5 +21,9 @@ export default {
       }
     },
   },
+  safelist: [
+    ...Array.from({ length: 6 }, (_, i) => `col-start-${i + 2}`),
+    ...Array.from({ length: 13 }, (_, i) => `row-start-${i + 2}`),
+  ],
   plugins: [],
 } satisfies Config;

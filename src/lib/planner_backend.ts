@@ -27,14 +27,14 @@ export type ClassU = {
   schedules: Schedule[]
 }
 
-type ScheduleEntry = {
+export type ScheduleEntry = {
   class_name: string;
   schedule_name: string;
 };
 
-type DaySchedule = Record<number, ScheduleEntry>;
+export type DaySchedule = Record<number, ScheduleEntry>;
 
-type WeeklySchedule = {
+export type WeeklySchedule = {
   monday: DaySchedule;
   tuesday: DaySchedule;
   wednesday: DaySchedule;
