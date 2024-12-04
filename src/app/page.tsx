@@ -32,7 +32,7 @@ export default function Home() {
           }}
         >Log In</button>
         <div className="w-full h-full px-8 py-6">
-          <Calendar/>
+          <Calendar userId={Number(userId)}/>
           <Classes userId={userId}/>
         </div>
       </div>
