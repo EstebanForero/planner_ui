@@ -137,7 +137,7 @@ const BlockVizualizer = ({ block }: BlockProps) => {
   };
 
   return (
-    <div className="bg-gray-800 border rounded-lg p-4 shadow-sm flex items-center space-x-4">
+    <div className="bg-gray-800 border rounded-lg p-4 shadow-sm flex items-center space-x-4 mt-6">
       <div className="flex items-center space-x-2">
         <span className="text-white">
           {formatHour(block.start_hour)}:00 - {formatHour(block.finish_hour)}:00
@@ -187,7 +187,7 @@ const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
   };
 
   return (
-    <div className="flex flex-col space-y-4 mb-6">
+    <div className="flex flex-col space-y-4 mb-6 mt-4">
       <div className="flex space-x-2">
         <input 
           type="number" 

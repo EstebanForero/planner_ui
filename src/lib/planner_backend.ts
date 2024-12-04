@@ -89,7 +89,7 @@ export async function add_schedule(class_id: number, schedule_name: string) {
 }
 
 export async function delete_schedule(schedule_id: number) {
-  return ky.post(`https://planner-production-4a40.up.railway.app/planner/deleteSchedule/${schedule_id}`)
+  return ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteSchedule/${schedule_id}`)
 }
 
 export async function add_block(block_creation: BlockCreation, schedule_id: number) {
@@ -109,7 +109,7 @@ export async function get_blocks(schedule_id: number): Promise<Block[]> {
 }
 
 export async function delete_block(block_id: number) {
-  return ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
+  ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteBlock/${block_id}`)
 }
 
 export async function get_planning(user_id: number): Promise<WeeklySchedule> {
