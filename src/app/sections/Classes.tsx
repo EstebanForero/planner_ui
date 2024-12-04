@@ -4,12 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
 import {Spinner} from "@nextui-org/spinner";
+import {Button, ButtonGroup} from "@nextui-org/button";
+import {  Modal,   ModalContent,   ModalHeader,   ModalBody,   ModalFooter, useDisclosure} from "@nextui-org/modal";
 
 
 const Classes = () => {
 
   const [userId, setUserId] = useState('')
   const [userIdTextField, setUserIdTextField] = useState('')
+  const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
   const { data, isError, isLoading } = useQuery({
     queryKey: ['classes', userId],
@@ -31,12 +34,16 @@ const Classes = () => {
           setUserId(userIdTextField)
         }}
       >Log In</button>
+      <button className='text-white rounded-lg bg-black border border-purple-500 p-2 ml-4'
+        onClick={onOpen}
+      >Add class</button>
+      <ClassAdderModal onOpenChange={onOpenChange} isOpen={isOpen}/>
       <Element name='classes'>
         {isError ?
           <p className='text-red-500'>Invalid user id</p>
         : 
           <div>
-            <Class class_id={0}/>
+            {data?.map(class_info => <Class key={class_info.class_id} class_id={class_info.class_id}/>)}
           </div>
         }
       </Element>
@@ -55,4 +62,41 @@ const Class = ({ class_id }: ClassProps) => {
   return (
     <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px]'>Classes</div>
   )
+}
+
+type ClassAdderProps = {
+  isOpen: boolean
+  onOpenChange: () => void
+}
+
+const ClassAdderModal = ({ isOpen, onOpenChange }: ClassAdderProps) => {
+  return <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+    <ModalContent>
+      {(onClose) => (
+        <>
+          <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+          <ModalBody>
+            <p> 
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              Nullam pulvinar risus non risus hendrerit venenatis.
+              Pellentesque sit amet hendrerit risus, sed porttitor quam.
+            </p>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              Nullam pulvinar risus non risus hendrerit venenatis.
+              Pellentesque sit amet hendrerit risus, sed porttitor quam.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" variant="light" onPress={onClose}>
+              Close
+            </Button>
+            <Button color="primary" onPress={onClose}>
+              Action
+            </Button>
+          </ModalFooter>
+        </>
+      )}
+    </ModalContent>
+  </Modal>
 }
