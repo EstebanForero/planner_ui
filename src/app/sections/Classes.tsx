@@ -1,5 +1,5 @@
 "use client";
-import { add_class, add_schedule, add_user, ClassU, get_class, get_classes } from '@/lib/planner_backend';
+import { add_class, add_schedule, add_user, ClassU, delete_class, get_class, get_classes } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
@@ -46,6 +46,8 @@ type ClassProps = {
 
 const Class = ({ class_id, user_id }: ClassProps) => {
 
+  const queryClient = useQueryClient()
+
   const { data, isLoading } = useQuery({
     queryFn: async () => {
       const class_info = await get_class(user_id, class_id)
@@ -57,7 +59,10 @@ const Class = ({ class_id, user_id }: ClassProps) => {
 
   const deleteClassMutation = useMutation({
     mutationFn: async () => {
-      delete_
+      delete_class(user_id, class_id)
+    },
+    onMutate: () => {
+      queryClient.invalidateQueries({ queryKey: ['classes']})
     }
   })
 
@@ -73,7 +78,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       <div className='flex flex-row justify-between items-center mb-3 mx-2'>
         <h1 className='text-white font-bold text-lg'>{data.class_name}</h1>
         <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg'
-          onClick={}
+          onClick={() => deleteClassMutation.mutate()}
         >Delete
         </button>
       </div>
