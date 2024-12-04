@@ -1,9 +1,10 @@
 "use client";
-import { add_class, add_user, ClassU, get_classes } from '@/lib/planner_backend';
+import { add_class, add_user, ClassU, get_class, get_classes } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
-import {Input} from "@nextui-org/input";
+import { Spinner } from '@nextui-org/spinner';
+import {Accordion, AccordionItem} from "@nextui-org/accordion";
 
 
 const Classes = () => {
@@ -15,6 +16,8 @@ const Classes = () => {
     queryKey: ['classes', userId],
     queryFn: async () => await get_classes(Number(userId))
   })
+
+  console.log('class info is: ', data)
 
   return (
     <section className='mt-2'>
@@ -37,7 +40,7 @@ const Classes = () => {
           <p className='text-red-500'>Invalid user id</p>
         : 
           <div>
-            {data?.map(class_info => <Class key={class_info.class_id} class_id={class_info.class_id}/>)}
+            {data?.map(class_info => <Class key={class_info.class_id} class_id={class_info.class_id} user_id={Number(userId)}/>)}
           </div>
         }
       </Element>
@@ -50,11 +53,36 @@ export default Classes
 
 type ClassProps = {
   class_id: number
+  user_id: number
 }
 
-const Class = ({ class_id }: ClassProps) => {
+const Class = ({ class_id, user_id }: ClassProps) => {
+
+  const { data, isLoading } = useQuery({
+    queryFn: async () => {
+      const class_info = await get_class(user_id, class_id)
+      console.log(class_info)
+      return class_info
+    },
+    queryKey: [`class${class_id}`]
+  })
+
+  if (isLoading) {
+    return <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] p-4'>
+      <Spinner/>
+    </div>
+
+  }
+
   return (
-    <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px]'>Classes</div>
+    <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] p-4'>
+      <h1 className='text-white'>{data?.class_name}</h1>
+      <Accordion variant='splitted'>
+        {data?.schedules.map(schedule => <AccordionItem>
+          {schedule.schedule_name}
+        </AccordionItem>)}
+      </Accordion>
+    </div>
   )
 }
 
@@ -79,7 +107,7 @@ const ClassAdder = (props: ClassAdderProps) => {
   })
 
   return (
-    <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] flex flex-col'>
+    <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] flex flex-col my-2 mb-8'>
       <input placeholder='Class name' className='m-3 rounded-lg bg-gray-800 px-3 py-1 text-white' onChange={(e) => setClassName(e.target.value)}/>
       <button className='text-white rounded-lg bg-black border border-purple-500 p-2' onClick={() => {
         console.log('class name added')

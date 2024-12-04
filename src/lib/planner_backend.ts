@@ -57,6 +57,7 @@ export async function add_class(user_id: number, class_name: string) {
 }
 
 export async function get_class(user_id: number, class_id: number): Promise<ClassU> {
+  console.log(`get class user_id: ${user_id} | class_id: ${class_id} `)
   return ky.post('https://planner-production-4a40.up.railway.app/planner/getClass', {
     json: {
       user_id: user_id,
