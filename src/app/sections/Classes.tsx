@@ -27,7 +27,7 @@ const Classes = ({ userId }: Props) => {
         {isError ?
           <p className='text-red-500'>Invalid user id</p>
         : 
-          <div className='flex flex-row justify-start gap-12'>
+          <div className='flex flex-row justify-start gap-12 flex-wrap'>
             {data?.map(class_id => <Class key={class_id} class_id={class_id} user_id={Number(userId)}/>)}
           </div>
         }
@@ -62,7 +62,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
       await delete_class(user_id, class_id)
     },
     onSettled: async () => {
-      queryClient.invalidateQueries({ queryKey: ['classes']})
+      queryClient.invalidateQueries({ queryKey: ['classes', String(user_id)]})
     }
   })
 
@@ -283,7 +283,7 @@ const ClassAdder = (props: ClassAdderProps) => {
       await add_class(props.user_id, className)
     },
     onSettled: async () => {
-      queryClient.invalidateQueries({ queryKey: ['classes']})
+      queryClient.invalidateQueries({ queryKey: ['classes', String(props.user_id)]})
     }
   })
 
