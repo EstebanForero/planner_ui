@@ -51,6 +51,7 @@ export type RankedWeek = {
 export interface RankingParameters {
   cost_hour: number,
   cost_day: number,
+  exit_time_multiplier: number
 }
 
 export async function add_user(): Promise<number> {

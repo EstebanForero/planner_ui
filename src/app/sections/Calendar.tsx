@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { Element } from 'react-scroll';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { get_planning as obtain_planning, RankedWeek, RankingParameters, WeeklySchedule } from '@/lib/planner_backend';
 import { Spinner } from '@nextui-org/spinner';
 
@@ -20,6 +20,9 @@ const Calendar = ({ userId }: Props) => {
   const [count, setCount] = useState(0);
   const [dayCost, setDayCost] = useState("");
   const [hourCost, setHourCost] = useState("");
+  const [exitTimeMultiplier, setExitTimeMultiplier] = useState("");
+
+  const queryClient = useQueryClient()
 
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const timeSlots = [
@@ -32,10 +35,11 @@ const Calendar = ({ userId }: Props) => {
   ];
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ['planning', userId, dayCost, hourCost],
+    queryKey: ['planning', userId],
     queryFn: async () => await get_planning({
       cost_day: Number(dayCost ?? '0'),
-      cost_hour: Number(hourCost ?? '0')
+      cost_hour: Number(hourCost ?? '0'),
+      exit_time_multiplier: Number(exitTimeMultiplier ?? '0')
     }, userId),
   });
 
@@ -141,6 +145,16 @@ col-span-1 row-span-1 bg-${color}-500 text-white flex justify-center items-cente
         <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
           placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
           placeholder:rounded rounded' placeholder='day cost' type='number' onChange={(e) => setDayCost(e.target.value)}/>
+
+        <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
+          placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
+          placeholder:rounded rounded' placeholder='exit time multiplier' type='number'
+          onChange={(e) => setExitTimeMultiplier(e.target.value)}/>
+
+        <button className='bg-transparent border rounded border-purple-800 text-white px-2 h-10 ml-3 hover:bg-purple-800 transition-colors duration-200'
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['planning', userId] })}>
+          get Plannings
+        </button>
 
         <p className='font-bold text-white text-lg inline ml-4'>puntuation: {data[count].puntuation}</p>
       </Element>
