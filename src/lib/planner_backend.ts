@@ -80,6 +80,10 @@ export async function get_classes(user_id: number): Promise<ClassU[]> {
   return ky.get(`https://planner-production-4a40.up.railway.app/planner/getClasses/${user_id}`).json()
 }
 
+export async function get_classes_id(user_id: number): Promise<number[]> {
+  return ky.get(`https://planner-production-4a40.up.railway.app/planner/getClassesId/${user_id}`).json()
+}
+
 export async function delete_class(user_id: number, class_id: number) {
   ky.delete(`https://planner-production-4a40.up.railway.app/planner/deleteClass`, {
     json: {

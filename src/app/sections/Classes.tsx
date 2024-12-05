@@ -1,5 +1,5 @@
 "use client";
-import { add_block, add_class, add_schedule, Block, BlockCreation, Day, delete_block, delete_class, delete_schedule, get_class, get_classes } from '@/lib/planner_backend';
+import { add_block, add_class, add_schedule, Block, BlockCreation, Day, delete_block, delete_class, delete_schedule, get_class, get_classes_id } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'
 import { Element } from 'react-scroll'
@@ -15,7 +15,7 @@ const Classes = ({ userId }: Props) => {
 
   const { data, isError } = useQuery({
     queryKey: ['classes', userId],
-    queryFn: async () => await get_classes(Number(userId))
+    queryFn: async () => await get_classes_id(Number(userId))
   })
 
   console.log('class info is: ', data)
@@ -28,7 +28,7 @@ const Classes = ({ userId }: Props) => {
           <p className='text-red-500'>Invalid user id</p>
         : 
           <div className='flex flex-row justify-start gap-12'>
-            {data?.map(class_info => <Class key={class_info.class_id} class_id={class_info.class_id} user_id={Number(userId)}/>)}
+            {data?.map(class_id => <Class key={class_id} class_id={class_id} user_id={Number(userId)}/>)}
           </div>
         }
       </Element>
