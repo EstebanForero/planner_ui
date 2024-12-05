@@ -27,7 +27,7 @@ const Classes = ({ userId }: Props) => {
         {isError ?
           <p className='text-red-500'>Invalid user id</p>
         : 
-          <div>
+          <div className='flex flex-row justify-start gap-12'>
             {data?.map(class_info => <Class key={class_info.class_id} class_id={class_info.class_id} user_id={Number(userId)}/>)}
           </div>
         }
@@ -61,7 +61,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
     mutationFn: async () => {
       await delete_class(user_id, class_id)
     },
-    onMutate: async () => {
+    onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: ['classes']})
     }
   })
@@ -70,7 +70,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
     mutationFn: async (schedule_id: number) => {
       await delete_schedule(schedule_id)
     },
-    onMutate: async () => {
+    onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
     }
   })
@@ -79,7 +79,7 @@ const Class = ({ class_id, user_id }: ClassProps) => {
     mutationFn: async (block_id: number) => {
       await delete_block(block_id)
     },
-    onMutate: async () => {
+    onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
       queryClient.invalidateQueries({ queryKey: ['planning']})
     }
@@ -176,7 +176,7 @@ const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
       resetForm()
       return await add_block(blockCreation, schedule_id);
     },
-    onMutate: async () => {
+    onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
       queryClient.invalidateQueries({ queryKey: [`planning`]})
     }
@@ -253,7 +253,7 @@ const ScheduleAdder = ({ class_id }: ScheduleAdderProps) => {
     mutationFn: async () => {
       await add_schedule(class_id, scheduleName)
     },
-    onMutate: async () => {
+    onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
     }
   })
@@ -282,7 +282,7 @@ const ClassAdder = (props: ClassAdderProps) => {
       console.log('executing add class mutation')
       await add_class(props.user_id, className)
     },
-    onMutate: async () => {
+    onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: ['classes']})
     }
   })
