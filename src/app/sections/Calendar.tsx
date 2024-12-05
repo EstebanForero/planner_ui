@@ -107,7 +107,7 @@ const Calendar = ({ userId }: Props) => {
 
             if (!daySchedule) return null
 
-            return Object.entries(daySchedule).map(([timeSlotStr, { class_name }]) => {
+            return Object.entries(daySchedule).map(([timeSlotStr, { class_name, schedule_name }]) => {
               const timeSlot = parseInt(timeSlotStr);
               let color = '';
               if (myColors.has(class_name)) {
@@ -120,7 +120,7 @@ const Calendar = ({ userId }: Props) => {
               return (
                 <div key={`${day}-${timeSlot}`} className={`col-start-${dayIndex + 2} row-start-${timeSlot - 7 + 2}
 col-span-1 row-span-1 bg-${color}-500 text-white flex justify-center items-center`}>
-                  {class_name}
+                  {class_name} - {schedule_name}
                 </div>
               );
             });
