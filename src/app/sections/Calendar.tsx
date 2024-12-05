@@ -14,6 +14,8 @@ interface Props {
   userId: number;
 }
 
+const myColors = new Map<string, string>()
+
 const Calendar = ({ userId }: Props) => {
   const [count, setCount] = useState(0);
   const [dayCost, setDayCost] = useState("");
@@ -23,6 +25,10 @@ const Calendar = ({ userId }: Props) => {
   const timeSlots = [
     '7am', '8am', '9am', '10am', '11am', '12pm', 
     '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm'
+  ];
+  const colors = [
+    'red', 'blue', 'purple', 'green', 'yellow',
+    'orange', 'gray', 'cyan', 'lime'
   ];
 
   const { data, isError, isLoading } = useQuery({
@@ -99,10 +105,17 @@ const Calendar = ({ userId }: Props) => {
 
             return Object.entries(daySchedule).map(([timeSlotStr, { class_name }]) => {
               const timeSlot = parseInt(timeSlotStr);
+              let color = '';
+              if (myColors.has(class_name)) {
+                color = myColors.get(class_name) 
+              } else {
+                myColors.set(class_name, getRandomItem(colors, myColors))
+                color = myColors.get(class_name);
+              }
 
               return (
                 <div key={`${day}-${timeSlot}`} className={`col-start-${dayIndex + 2} row-start-${timeSlot - 7 + 2}
-col-span-1 row-span-1 bg-red-500 text-white flex justify-center items-center`}>
+col-span-1 row-span-1 bg-${color}-500 text-white flex justify-center items-center`}>
                   {class_name}
                 </div>
               );
@@ -135,5 +148,17 @@ col-span-1 row-span-1 bg-red-500 text-white flex justify-center items-center`}>
   );
 };
 
+function getRandomItem(arr: string[], hashMap: Map<string, string>): string {
+  const availableColors = arr.filter(color => !Array.from(hashMap.values()).includes(color));
+
+  if (availableColors.length === 0) {
+    throw new Error("No available colors left");
+  }
+
+  const randomIndex = Math.floor(Math.random() * availableColors.length);
+  return availableColors[randomIndex];
+}
+
 export default Calendar;
+
 

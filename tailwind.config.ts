@@ -24,6 +24,9 @@ export default {
   safelist: [
     ...Array.from({ length: 6 }, (_, i) => `col-start-${i + 2}`),
     ...Array.from({ length: 13 }, (_, i) => `row-start-${i + 2}`),
+    {
+      pattern: /bg-(red|green|blue|yellow|purple|pink|gray|indigo|teal|cyan|orange|pink|lime)-(100|200|300|400|500|600|700|800|900)/,
+    }
   ],
   plugins: [],
 } satisfies Config;
