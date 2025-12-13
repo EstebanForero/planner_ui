@@ -1,10 +1,10 @@
-FROM oven/bun:1.1 AS deps
+FROM oven/bun:latest AS deps
 WORKDIR /app
 
 COPY package.json bun.lockb ./
 RUN bun install --frozen-lockfile
 
-FROM oven/bun:1.1 AS builder
+FROM oven/bun:latest AS builder
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -17,7 +17,7 @@ COPY . .
 
 RUN bun run build
 
-FROM oven/bun:1.1 AS runner
+FROM oven/bun:latest AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
