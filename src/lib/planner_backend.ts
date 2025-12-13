@@ -1,6 +1,9 @@
 import ky from "ky"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8080"
+// Allow either NEXT_PUBLIC_BACKEND_URL (Next-exposed) or BACKEND_URL (when the host only sets this).
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+  ?? process.env.BACKEND_URL
+  ?? "http://localhost:8080"
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 

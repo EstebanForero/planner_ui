@@ -10,6 +10,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Used at build time so the frontend bundle points to the correct backend.
 ARG BACKEND_URL=http://localhost:8080
+ENV BACKEND_URL=${BACKEND_URL}
 ENV NEXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -23,6 +24,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ARG BACKEND_URL=http://localhost:8080
+ENV BACKEND_URL=${BACKEND_URL}
 ENV NEXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
 
 COPY --from=builder /app/public ./public
