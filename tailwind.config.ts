@@ -25,7 +25,11 @@ export default {
     ...Array.from({ length: 6 }, (_, i) => `col-start-${i + 2}`),
     ...Array.from({ length: 13 }, (_, i) => `row-start-${i + 2}`),
     {
-      pattern: /bg-(red|green|blue|yellow|purple|pink|gray|indigo|teal|cyan|orange|pink|lime)-(100|200|300|400|500|600|700|800|900)/,
+      pattern: /(bg|border|text|ring)-(red|green|blue|yellow|purple|pink|gray|indigo|teal|cyan|orange|lime)-(100|200|300|400|500|600|700|800|900)/,
+      variants: ['hover'],
+    },
+    {
+      pattern: /(bg|border|text)-(red|green|blue|yellow|purple|pink|gray|indigo|teal|cyan|orange|lime)-(100|200|300|400|500|600|700|800|900)\/(10|15|20|25|30|40|50|60|70|75|80|90)/,
     }
   ],
   plugins: [],

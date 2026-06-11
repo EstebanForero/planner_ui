@@ -1,11 +1,20 @@
 "use client";
-import { add_block, add_class, add_schedule, Block, BlockCreation, Day, delete_block, delete_class, delete_schedule, get_class, get_classes_id } from '@/lib/planner_backend';
+import { add_block, add_class, add_schedule, Block, BlockCreation, CourseSummary, Day, delete_block, delete_class, delete_schedule, get_class, get_classes_id, get_course, relink_class, search_courses } from '@/lib/planner_backend';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Element } from 'react-scroll'
 import { Spinner } from '@nextui-org/spinner';
 import {Accordion, AccordionItem} from "@nextui-org/accordion";
+import { badgeGray, badgeGreen, badgeViolet, card, dangerButton, inputClass, labelClass, primaryButton, secondaryButton, sectionSubtitle, sectionTitle } from '@/lib/ui';
+import NumberField from '../components/NumberField';
 
+const accordionItemClasses = {
+  base: 'bg-zinc-800/60 border border-zinc-700 rounded-lg',
+  title: 'text-white font-medium text-sm',
+  trigger: 'px-4 py-3',
+  content: 'px-4 pb-4 text-zinc-200',
+  indicator: 'text-zinc-400',
+}
 
 type Props = {
   userId: string
@@ -18,21 +27,30 @@ const Classes = ({ userId }: Props) => {
     queryFn: async () => await get_classes_id(Number(userId))
   })
 
-  console.log('class info is: ', data)
-
   return (
-    <section className='mt-2'>
-      <ClassAdder user_id={Number(userId)}/>
-      <Element name='classes'>
-        {isError ?
-          <p className='text-red-500'>Invalid user id</p>
-        : 
-          <div className='flex flex-row justify-start gap-12 flex-wrap'>
+    <Element name='classes'>
+      <section className='flex flex-col gap-4'>
+        <div>
+          <h2 className={sectionTitle}>My classes</h2>
+          <p className={sectionSubtitle}>
+            Every class links to a shared course. Classes that share the same course id keep their
+            sections in sync with the rest of your group — copy the course id from a card to share it.
+          </p>
+        </div>
+
+        <ClassAdder user_id={Number(userId)}/>
+
+        {isError ? (
+          <p className='text-red-400'>Invalid user id</p>
+        ) : data?.length === 0 ? (
+          <p className='text-zinc-500 text-sm'>You haven&apos;t added any classes yet.</p>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             {data?.map(class_id => <Class key={class_id} class_id={class_id} user_id={Number(userId)}/>)}
           </div>
-        }
-      </Element>
-    </section>
+        )}
+      </section>
+    </Element>
   )
 }
 
@@ -47,14 +65,18 @@ type ClassProps = {
 const Class = ({ class_id, user_id }: ClassProps) => {
 
   const queryClient = useQueryClient()
+  const [copied, setCopied] = useState(false)
+  const [showRelink, setShowRelink] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryFn: async () => {
-      const class_info = await get_class(user_id, class_id)
-      console.log(class_info)
-      return class_info
-    },
+    queryFn: async () => await get_class(user_id, class_id),
     queryKey: [`class${class_id}`]
+  })
+
+  const { data: courseData } = useQuery({
+    queryFn: async () => await get_course(data!.course_id),
+    queryKey: [`course${data?.course_id}`],
+    enabled: !!data,
   })
 
   const deleteClassMutation = useMutation({
@@ -86,67 +108,186 @@ const Class = ({ class_id, user_id }: ClassProps) => {
   })
 
   if (isLoading || !data) {
-    return <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] p-4'>
+    return <div className={`${card} min-h-32 flex items-center justify-center`}>
       <Spinner/>
     </div>
+  }
 
+  const copyCourseId = () => {
+    navigator.clipboard.writeText(String(data.course_id))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
   return (
-    <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] p-4'>
-      <div className='flex flex-row justify-between items-center mb-3 mx-2'>
-        <h1 className='text-white font-bold text-lg'>{data.class_name}</h1>
-        <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg'
-          onClick={() => deleteClassMutation.mutate()}
-        >Delete
+    <div className={card}>
+      <div className='flex items-start justify-between gap-3 mb-3'>
+        <div className='flex flex-col gap-1.5'>
+          <h3 className='text-white font-semibold text-lg'>{data.class_name}</h3>
+          <div className='flex flex-wrap items-center gap-1.5'>
+            <button
+              className={`${badgeViolet} hover:bg-violet-500/25 transition`}
+              title='Click to copy this course id and share it with your group so they link to the same course'
+              onClick={copyCourseId}
+            >
+              Course #{data.course_id} {copied ? '· copied!' : '· click to share'}
+            </button>
+            {courseData && (
+              courseData.class_count > 1 ? (
+                <span className={badgeGreen} title='Other classes are linked to this same shared course'>
+                  Shared · {courseData.class_count} classes
+                </span>
+              ) : (
+                <span className={badgeGray} title='No one else has linked a class to this course yet'>
+                  Personal · not shared yet
+                </span>
+              )
+            )}
+          </div>
+        </div>
+        <button className={dangerButton} onClick={() => deleteClassMutation.mutate()}>
+          Delete
         </button>
       </div>
-      <ScheduleAdder class_id={class_id}/>
-      <Accordion variant='splitted'>
-        {data.schedules.map(schedule_info => <AccordionItem key={schedule_info.schedule_id} title={schedule_info.schedule_name}
-          className='border border-purple-600 rounded-lg mt-4 text-white py-3'
-        >
-          <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8 mt-4'
-            onClick={() => deleteScheduleMutation.mutate(schedule_info.schedule_id)}
-          >Delete
-          </button>
-          <BlockAdder schedule_id={schedule_info.schedule_id} class_id={class_id}/>
-          <Accordion variant='splitted'>
-            {schedule_info.blocks.map(block_info => <AccordionItem key={block_info.block_id} title={block_info.day}
-              className='border border-purple-600 rounded-lg text-white py-3'
-            >
-              <button className='border px-2 border-red-500 text-red-500 font-bold bg-black rounded-lg mr-8 mt-4'
-                onClick={() => deleteBlockMutation.mutate(block_info.block_id)}
-              >Delete
+
+      <button className={`${secondaryButton} text-sm px-3 py-1.5 mb-3`} onClick={() => setShowRelink(s => !s)}>
+        {showRelink ? 'Hide sharing options' : 'Change shared course'}
+      </button>
+
+      {showRelink && (
+        <RelinkPanel user_id={user_id} class_id={class_id} current_course_id={data.course_id}/>
+      )}
+
+      <ScheduleAdder class_id={class_id} course_id={data.course_id}/>
+
+      {data.schedules.length === 0 ? (
+        <p className='text-zinc-500 text-sm mt-4'>No sections yet — add one above.</p>
+      ) : (
+        <Accordion variant='splitted' className='px-0 gap-2 mt-4' itemClasses={accordionItemClasses}>
+          {data.schedules.map(schedule_info => (
+            <AccordionItem key={schedule_info.schedule_id} title={schedule_info.schedule_name}>
+              <div className='flex justify-end mb-2'>
+                <button className={dangerButton}
+                  onClick={() => deleteScheduleMutation.mutate(schedule_info.schedule_id)}
+                >Delete section</button>
+              </div>
+
+              <BlockAdder schedule_id={schedule_info.schedule_id} class_id={class_id}/>
+
+              {schedule_info.blocks.length === 0 ? (
+                <p className='text-zinc-500 text-sm mt-2'>No time blocks yet.</p>
+              ) : (
+                <div className='flex flex-col gap-2 mt-2'>
+                  {schedule_info.blocks.map(block_info => (
+                    <BlockVisualizer key={block_info.block_id} block={block_info}
+                      onDelete={() => deleteBlockMutation.mutate(block_info.block_id)}/>
+                  ))}
+                </div>
+              )}
+            </AccordionItem>
+          ))}
+        </Accordion>
+      )}
+    </div>
+  )
+}
+
+type RelinkPanelProps = {
+  user_id: number
+  class_id: number
+  current_course_id: number
+}
+
+const RelinkPanel = ({ user_id, class_id, current_course_id }: RelinkPanelProps) => {
+  const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedQuery(query), 300)
+    return () => clearTimeout(handle)
+  }, [query])
+
+  const { data: results } = useQuery({
+    queryKey: ['searchCourses', debouncedQuery],
+    queryFn: async () => await search_courses(debouncedQuery),
+    enabled: debouncedQuery.trim().length > 0,
+  })
+
+  const relinkMutation = useMutation({
+    mutationFn: async (course_id?: number) => {
+      await relink_class(user_id, class_id, course_id)
+    },
+    onSettled: async () => {
+      queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
+      queryClient.invalidateQueries({ queryKey: [`course${current_course_id}`]})
+      queryClient.invalidateQueries({ queryKey: ['classes', String(user_id)]})
+      queryClient.invalidateQueries({ queryKey: ['planning']})
+    }
+  })
+
+  const otherResults = (results ?? []).filter(c => c.course_id !== current_course_id)
+
+  return (
+    <div className='mb-4 pb-4 border-b border-zinc-800 flex flex-col gap-2'>
+      <p className={labelClass}>
+        Search for the course your group is using and relink this class to it
+      </p>
+      <input
+        placeholder='e.g. Cloud Architecture'
+        className={`${inputClass} w-full`}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      {otherResults.length > 0 && (
+        <ul className='flex flex-col gap-1 max-h-40 overflow-auto'>
+          {otherResults.map(course => (
+            <li key={course.course_id}>
+              <button
+                className='w-full text-left px-3 py-2 rounded-lg bg-zinc-800 hover:bg-violet-600/20 transition
+                  text-sm text-zinc-100 flex justify-between items-center disabled:opacity-40'
+                disabled={relinkMutation.isPending}
+                onClick={() => relinkMutation.mutate(course.course_id)}
+              >
+                <span>{course.course_name}</span>
+                <span className='text-zinc-500 text-xs'>
+                  #{course.course_id} · {course.class_count} {course.class_count === 1 ? 'class' : 'classes'}
+                </span>
               </button>
-              <BlockVizualizer block={block_info}/>
-            </AccordionItem>)}
-          </Accordion>
-        </AccordionItem>)}
-      </Accordion>
+            </li>
+          ))}
+        </ul>
+      )}
+      <button className={`${secondaryButton} self-start text-sm`}
+        disabled={relinkMutation.isPending}
+        onClick={() => relinkMutation.mutate(undefined)}
+      >
+        Make this class personal again
+      </button>
+      {relinkMutation.isError && (
+        <p className='text-red-400 text-xs'>Failed to update this class&apos;s shared course.</p>
+      )}
     </div>
   )
 }
 
 interface BlockProps {
   block: Block;
+  onDelete: () => void;
 }
 
-const BlockVizualizer = ({ block }: BlockProps) => {
-  const formatHour = (hour: number) => {
-    return hour.toString().padStart(2, '0');
-  };
+const BlockVisualizer = ({ block, onDelete }: BlockProps) => {
+  const formatHour = (hour: number) => hour.toString().padStart(2, '0');
 
   return (
-    <div className="bg-gray-800 border rounded-lg p-4 shadow-sm flex items-center space-x-4 mt-6">
-      <div className="flex items-center space-x-2">
-        <span className="text-white">
-          {formatHour(block.start_hour)}:00 - {formatHour(block.finish_hour)}:00
-        </span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <span className="text-white">{block.day}</span>
-      </div>
+    <div className='flex items-center justify-between rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm'>
+      <span className='text-zinc-200'>
+        {block.day} · {formatHour(block.start_hour)}:00 – {formatHour(block.finish_hour)}:00
+      </span>
+      <button className='text-red-400 hover:text-red-300 text-xs font-medium' onClick={onDelete}>
+        Remove
+      </button>
     </div>
   );
 };
@@ -189,51 +330,40 @@ const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
   };
 
   return (
-    <div className="flex flex-col space-y-4 mb-6 mt-4">
-      <div className="flex space-x-2">
-        <input 
-          type="number" 
-          value={startHour} 
-          onChange={(e) => setStartHour(Number(e.target.value))}
-          min={0} 
-          max={23} 
-          className="w-20 p-2 border rounded bg-black text-white border-purple-600"
-          placeholder="Start Hour"
-        />
+    <div className="flex flex-col gap-2 mb-3">
+      <div className="flex flex-wrap items-end gap-2">
+        <NumberField label="Start" value={startHour} min={0} max={23} className="w-24"
+          onChange={setStartHour}/>
 
-        <input 
-          type="number" 
-          value={finishHour} 
-          onChange={(e) => setFinishHour(Number(e.target.value))}
-          min={0} 
-          max={23} 
-          className="w-20 p-2 border rounded bg-black text-white border-purple-600"
-          placeholder="Finish Hour"
-        />
+        <NumberField label="End" value={finishHour} min={0} max={23} className="w-24"
+          onChange={setFinishHour}/>
 
-        <select 
-          value={selectedDay} 
-          onChange={(e) => setSelectedDay(e.target.value as Day)}
-          className="p-2 border rounded bg-black text-white border-purple-600"
+        <div className="flex flex-col gap-1">
+          <label className={labelClass}>Day</label>
+          <select
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(e.target.value as Day)}
+            className={`${inputClass} w-36`}
+          >
+            {days.map((day) => (
+              <option key={day} value={day}>{day}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={() => addBlockMutation.mutate()}
+          disabled={addBlockMutation.isPending}
+          className={`${secondaryButton} px-3 py-2`}
         >
-          {days.map((day) => (
-            <option key={day} value={day}>{day}</option>
-          ))}
-        </select>
+          {addBlockMutation.isPending ? 'Adding...' : '+ Add time block'}
+        </button>
       </div>
 
-      <button 
-        onClick={() => addBlockMutation.mutate()}
-        disabled={addBlockMutation.isPending}
-        className="text-white rounded-lg bg-black border border-purple-500 p-2"
-      >
-        {addBlockMutation.isPending ? 'Adding...' : 'Add Block'}
-      </button>
-
       {addBlockMutation.isError && (
-        <div className="text-red-500">
+        <p className="text-red-400 text-xs">
           Error adding block: {addBlockMutation.error.message}
-        </div>
+        </p>
       )}
     </div>
   );
@@ -241,9 +371,10 @@ const BlockAdder = ({ schedule_id, class_id }: BlockAddedProps) => {
 
 type ScheduleAdderProps = {
   class_id: number
+  course_id: number
 }
 
-const ScheduleAdder = ({ class_id }: ScheduleAdderProps) => {
+const ScheduleAdder = ({ class_id, course_id }: ScheduleAdderProps) => {
 
   const [scheduleName, setScheduleName] = useState('')
 
@@ -251,18 +382,24 @@ const ScheduleAdder = ({ class_id }: ScheduleAdderProps) => {
 
   const addScheduleMutation = useMutation({
     mutationFn: async () => {
-      await add_schedule(class_id, scheduleName)
+      await add_schedule(course_id, scheduleName)
+    },
+    onSuccess: () => {
+      setScheduleName('')
     },
     onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: [`class${class_id}`]})
     }
   })
 
-  return <div className='flex flex-row mx-2'>
-    <input className='text-white bg-gray-800 p-2 mr-4 rounded-lg grow' onChange={(e) => setScheduleName(e.target.value)}/>
-    <button className='text-white rounded-lg bg-black border border-purple-500 p-2'
+  return <div className='flex gap-2'>
+    <input className={`${inputClass} grow`} value={scheduleName} placeholder='Section / schedule name'
+      onChange={(e) => setScheduleName(e.target.value)}
+    />
+    <button className={secondaryButton}
+      disabled={!scheduleName.trim() || addScheduleMutation.isPending}
       onClick={() => addScheduleMutation.mutate()}
-    >Add schedule</button>
+    >{addScheduleMutation.isPending ? 'Adding...' : '+ Add section'}</button>
   </div>
 
 }
@@ -274,26 +411,102 @@ type ClassAdderProps = {
 const ClassAdder = (props: ClassAdderProps) => {
 
   const [className, setClassName] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [selectedCourse, setSelectedCourse] = useState<CourseSummary | null>(null)
+  const [showResults, setShowResults] = useState(false)
 
   const queryClient = useQueryClient()
 
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedQuery(className), 300)
+    return () => clearTimeout(handle)
+  }, [className])
+
+  const { data: results } = useQuery({
+    queryKey: ['searchCourses', debouncedQuery],
+    queryFn: async () => await search_courses(debouncedQuery),
+    enabled: debouncedQuery.trim().length > 0,
+  })
+
+  const { data: selectedCourseDetails } = useQuery({
+    queryKey: [`course${selectedCourse?.course_id}`],
+    queryFn: async () => await get_course(selectedCourse!.course_id),
+    enabled: !!selectedCourse,
+  })
+
   const addClassMutation = useMutation({
     mutationFn: async () => {
-      console.log('executing add class mutation')
-      await add_class(props.user_id, className)
+      await add_class(props.user_id, className, selectedCourse?.course_id)
+    },
+    onSuccess: () => {
+      setClassName('')
+      setSelectedCourse(null)
     },
     onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: ['classes', String(props.user_id)]})
     }
   })
 
+  const handleSelectCourse = (course: CourseSummary) => {
+    setSelectedCourse(course)
+    setClassName(course.course_name)
+    setShowResults(false)
+  }
+
+  const handleChange = (value: string) => {
+    setClassName(value)
+    setSelectedCourse(null)
+    setShowResults(true)
+  }
+
   return (
-    <div className='bg-black border border-purple-600 rounded-lg min-h-20 max-w-[520px] flex flex-col my-2 mb-8'>
-      <input placeholder='Class name' className='m-3 rounded-lg bg-gray-800 px-3 py-1 text-white' onChange={(e) => setClassName(e.target.value)}/>
-      <button className='text-white rounded-lg bg-black border border-purple-500 p-2' onClick={() => {
-        console.log('class name added')
-        addClassMutation.mutate()
-      }}>Add class</button>
+    <div className={card}>
+      <h3 className='text-white font-semibold mb-1'>Add a class</h3>
+      <p className='text-zinc-400 text-sm mb-3'>
+        Search for a course your group already added (so your sections line up), or type a new name to create one.
+      </p>
+      <div className='relative'>
+        <input
+          placeholder='Course or class name'
+          className={`${inputClass} w-full`}
+          value={className}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => setShowResults(true)}
+          onBlur={() => setTimeout(() => setShowResults(false), 150)}
+        />
+        {showResults && results && results.length > 0 && (
+          <ul className='absolute z-10 w-full bg-zinc-900 border border-zinc-700 rounded-lg mt-1 max-h-48 overflow-auto shadow-xl'>
+            {results.map(course => (
+              <li key={course.course_id}
+                className='px-3 py-2 text-zinc-100 hover:bg-violet-600/20 cursor-pointer flex justify-between text-sm'
+                onMouseDown={() => handleSelectCourse(course)}
+              >
+                <span>{course.course_name}</span>
+                <span className='text-zinc-500 text-xs'>
+                  #{course.course_id} · {course.class_count} {course.class_count === 1 ? 'class' : 'classes'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {selectedCourse ? (
+        <p className={`${badgeGreen} mt-2`}>
+          Joining &quot;{selectedCourse.course_name}&quot; (#{selectedCourse.course_id}){' '}
+          {selectedCourseDetails && selectedCourseDetails.schedules.length > 0
+            ? `— ${selectedCourseDetails.schedules.length} section${selectedCourseDetails.schedules.length === 1 ? '' : 's'} `
+              + `(${selectedCourseDetails.schedules.map(s => s.schedule_name).join(', ')}) already set up, you'll see them right away`
+            : '— sections will line up with this course'}
+        </p>
+      ) : className.trim() ? (
+        <p className={`${badgeGray} mt-2`}>
+          New shared course &quot;{className}&quot; will be created
+        </p>
+      ) : null}
+      <button className={`${primaryButton} mt-3`}
+        disabled={!className.trim() || addClassMutation.isPending}
+        onClick={() => addClassMutation.mutate()}
+      >{addClassMutation.isPending ? 'Adding...' : 'Add class'}</button>
     </div>
   )
 }

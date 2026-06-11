@@ -4,6 +4,25 @@
 
 @layer base {
   body {
-    @apply bg-[#1A1A1A]
+    @apply bg-zinc-950 text-zinc-100;
   }
+}
+
+* {
+  scrollbar-color: theme('colors.zinc.700') theme('colors.zinc.950');
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: theme('colors.zinc.950');
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: theme('colors.zinc.700');
+  border-radius: 9999px;
 }

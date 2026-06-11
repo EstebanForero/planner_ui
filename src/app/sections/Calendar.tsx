@@ -4,17 +4,27 @@ import { Element } from 'react-scroll';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { get_planning as obtain_planning, RankedWeek, RankingParameters, WeeklySchedule } from '@/lib/planner_backend';
 import { Spinner } from '@nextui-org/spinner';
+import WeekGrid, { colorForClass } from './WeekGrid';
+import { card, primaryButton, secondaryButton, sectionSubtitle, sectionTitle } from '@/lib/ui';
+import NumberField from '../components/NumberField';
 
 const get_planning = async (rankingParameters: RankingParameters, user_id: number): Promise<RankedWeek[]> => {
-
   return await obtain_planning(rankingParameters, user_id);
 };
+
+const dayKeys: (keyof WeeklySchedule)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+function collectClassNames(week: WeeklySchedule): string[] {
+  const names = new Set<string>();
+  for (const day of dayKeys) {
+    Object.values(week[day]).forEach(entry => names.add(entry.class_name));
+  }
+  return Array.from(names);
+}
 
 interface Props {
   userId: number;
 }
-
-const myColors = new Map<string, string>()
 
 const Calendar = ({ userId }: Props) => {
   const [count, setCount] = useState(0);
@@ -23,16 +33,6 @@ const Calendar = ({ userId }: Props) => {
   const [exitTimeMultiplier, setExitTimeMultiplier] = useState("");
 
   const queryClient = useQueryClient()
-
-  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const timeSlots = [
-    '7am', '8am', '9am', '10am', '11am', '12pm', 
-    '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm'
-  ];
-  const colors = [
-    'red', 'blue', 'purple', 'green', 'yellow',
-    'orange', 'gray', 'cyan', 'lime'
-  ];
 
   const { data, isError, isLoading } = useQuery({
     queryKey: ['planning', userId],
@@ -45,134 +45,82 @@ const Calendar = ({ userId }: Props) => {
 
   if (isError) throw new Error("Error calling get planning from backend");
 
-  if (isLoading || !data) {
-    return <Spinner/>
-  }
-
-  console.log('planning data is: ')
-  console.log(data)
-
-  const dayMap: Record<string, keyof WeeklySchedule> = {
-    'Mon': 'monday',
-    'Tue': 'tuesday',
-    'Wed': 'wednesday',
-    'Thu': 'thursday',
-    'Fri': 'friday',
-    'Sat': 'saturday',
-  }
-
   const handler = () => {
-    if (count == data.length - 1) {
-      return
-    }
+    if (!data || count == data.length - 1) return
     setCount(count + 1);
-    return
   }
 
   const prevHandler = () => {
-    if (count == 0) {
-      return
-    }
+    if (count == 0) return
     setCount(count - 1);
   }
 
-  if (!data[count]) {
-    return null
-  }
+  const current = data?.[count];
+  const classNames = current ? collectClassNames(current.week) : [];
 
   return (
-    <section className="mb-3 w-full h-full">
-      <Element name="calendar" className="w-full h-full">
-        <div className="grid grid-cols-7 grid-rows-14 w-full h-full">
-          {daysOfWeek.map((day, dayIndex) => (
-            <p
-              key={day}
-              className={`col-start-${dayIndex + 2} col-span-1 text-white flex w-12 h-12 justify-center items-center pl-3 text-xl font-bold`}>
-              {day}
-            </p>
-          ))}
-
-          {timeSlots.map((time, timeIndex) => (
-            <p
-              key={time}
-              className={`row-start-${timeIndex + 2} row-span-1 text-white flex w-12 h-12 justify-center items-center pl-3 text-xl font-bold`}>
-              {time}
-            </p>
-          ))}
-
-          {daysOfWeek.map((day, dayIndex) => {
-            const actualDayKey = dayMap[day];
-
-            const daySchedule = data[count].week?.[actualDayKey];
-
-            if (!daySchedule) return null
-
-            return Object.entries(daySchedule).map(([timeSlotStr, { class_name, schedule_name }]) => {
-              const timeSlot = parseInt(timeSlotStr);
-              let color = '';
-              if (myColors.has(class_name)) {
-                color = myColors.get(class_name) 
-              } else {
-                myColors.set(class_name, getRandomItem(colors, myColors))
-                color = myColors.get(class_name);
-              }
-
-              return (
-                <div key={`${day}-${timeSlot}`} className={`col-start-${dayIndex + 2} row-start-${timeSlot - 7 + 2}
-col-span-1 row-span-1 bg-${color}-500 text-white flex justify-center items-center`}>
-                  {class_name} - {schedule_name}
-                </div>
-              );
-            });
-          })}
-
+    <Element name="calendar">
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className={sectionTitle}>My schedule</h2>
+          <p className={sectionSubtitle}>Find the best weekly combination of your own classes.</p>
         </div>
 
-        <button className='bg-transparent border rounded border-purple-800 text-white w-16 h-10'
-          onClick={handler}>
-          Next
-        </button>
+        <div className={`${card} flex flex-wrap items-end gap-4`}>
+          <NumberField label="Hour cost" placeholder='0' value={hourCost} className="w-32"
+            onChange={(v) => setHourCost(String(v))}/>
+          <NumberField label="Day cost" placeholder='0' value={dayCost} className="w-32"
+            onChange={(v) => setDayCost(String(v))}/>
+          <NumberField label="Exit time multiplier" placeholder='0' value={exitTimeMultiplier} className="w-44"
+            onChange={(v) => setExitTimeMultiplier(String(v))}/>
+          <button className={primaryButton}
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['planning', userId] })}>
+            Get plannings
+          </button>
+        </div>
 
-        <button className='bg-transparent border rounded border-purple-800 text-white w-16 h-10 ml-3'
-          onClick={prevHandler}>
-          Prev 
-        </button>
+        <div className={card}>
+          {isLoading || !data ? (
+            <div className="flex justify-center py-12"><Spinner/></div>
+          ) : !current ? (
+            <p className='text-zinc-400 text-center py-8'>
+              No valid schedule could be generated yet. Add some classes and schedules first.
+            </p>
+          ) : (
+            <>
+              <WeekGrid week={current.week}/>
 
-        <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
-          placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
-          placeholder:rounded rounded' placeholder='hour cost' type='number' onChange={(e) => setHourCost(e.target.value)}/>
+              {classNames.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {classNames.map(name => {
+                    const color = colorForClass(name);
+                    return (
+                      <span key={name}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium
+                          bg-${color}-500/15 text-${color}-300 border border-${color}-500/30`}>
+                        {name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
-        <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
-          placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
-          placeholder:rounded rounded' placeholder='day cost' type='number' onChange={(e) => setDayCost(e.target.value)}/>
-
-        <input className='ml-4 bg-transparent border border-purple-800 text-white w-30 h-10 p-2
-          placeholder:p-1 placeholder:text-gray-400 placeholder:m-2 placeholder:bg-gray-800
-          placeholder:rounded rounded' placeholder='exit time multiplier' type='number'
-          onChange={(e) => setExitTimeMultiplier(e.target.value)}/>
-
-        <button className='bg-transparent border rounded border-purple-800 text-white px-2 h-10 ml-3 hover:bg-purple-800 transition-colors duration-200'
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['planning', userId] })}>
-          get Plannings
-        </button>
-
-        <p className='font-bold text-white text-lg inline ml-4'>puntuation: {data[count].puntuation}</p>
-      </Element>
-    </section>
+              <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-zinc-800">
+                <button className={`${secondaryButton} px-3 py-1.5`} disabled={count === 0} onClick={prevHandler}>
+                  ← Prev
+                </button>
+                <button className={`${secondaryButton} px-3 py-1.5`} disabled={count === data.length - 1} onClick={handler}>
+                  Next →
+                </button>
+                <span className="text-sm text-zinc-400">Option {count + 1} of {data.length}</span>
+                <span className="ml-auto text-sm font-semibold text-white">Score: {current.puntuation.toFixed(2)}</span>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    </Element>
   );
 };
 
-function getRandomItem(arr: string[], hashMap: Map<string, string>): string {
-  const availableColors = arr.filter(color => !Array.from(hashMap.values()).includes(color));
-
-  if (availableColors.length === 0) {
-    throw new Error("No available colors left");
-  }
-
-  const randomIndex = Math.floor(Math.random() * availableColors.length);
-  return availableColors[randomIndex];
-}
-
 export default Calendar;
-
-
