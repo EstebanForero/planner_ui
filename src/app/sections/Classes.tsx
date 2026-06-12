@@ -507,6 +507,11 @@ const ClassAdder = (props: ClassAdderProps) => {
         disabled={!className.trim() || addClassMutation.isPending}
         onClick={() => addClassMutation.mutate()}
       >{addClassMutation.isPending ? 'Adding...' : 'Add class'}</button>
+      {addClassMutation.isError && (
+        <p className="text-red-400 text-xs mt-2">
+          Failed to add class: {addClassMutation.error.message}
+        </p>
+      )}
     </div>
   )
 }
